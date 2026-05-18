@@ -354,16 +354,16 @@
 <div class="app" id="appRoot">
   <div id="usernamePage" class="page">
     <div style="flex:1; display: flex; flex-direction: column; justify-content: center;">
-      <h2>⬤ SHADOW CHAT</h2>
-      <div class="sub">real-time · anonymous · end-to-end</div>
+      <h2>SHADOW CHAT</h2>
+      <div class="sub">Beware of scams</div>
       <input type="text" id="usernameInput" placeholder="preferred username" maxlength="22" autocomplete="off">
-      <button id="enterBtn" style="margin-top: 28px;">↣ ENTER SHADOW</button>
+      <button id="enterBtn" style="margin-top: 28px;">ENTER SHADOW</button>
       <div style="margin-top: 28px; font-size: 0.7rem; text-align: center; color:#3a3a3a;">no sign · no trace · pure echo</div>
     </div>
   </div>
 
   <div id="waitingPage" class="page hidden">
-    <h2 style="font-size:1.6rem;">◈ SHADOW VEIL</h2>
+    <h2 style="font-size:1.6rem;">◈ QUEUED</h2>
     <div class="waiting-box">
       <div class="active-label">ACTIVE NOW</div>
       <div class="big-number" id="activeUserCount">0</div>
@@ -401,7 +401,7 @@
       </button>
     </div>
     <div class="messages-area" id="messageContainer">
-      <div class="system-message">✦ Connection is established. You are now connected. ✦</div>
+      <div class="system-message">✦ You are now connected. ✦</div>
     </div>
     <div class="input-container">
       <div class="input-row">
@@ -411,7 +411,7 @@
     </div>
     <div class="action-buttons" id="actionButtons">
       <button id="backHomeBtn">BACK TO HOME</button>
-      <button id="rematchBtn">⟳ REMATCH</button>
+      <button id="rematchBtn">REMATCH</button>
     </div>
     <div id="partnerLeftNote" class="partner-left-note"></div>
   </div>
@@ -571,7 +571,7 @@
             partnerLeftFlag = true;
             updatePartnerUI();
             addMessage(`${data.partnerName} has left the conversation`, 'system');
-            partnerLeftNoteDiv.innerText = `❗ ${data.partnerName} left — typing & send disabled. Use REMATCH or BACK TO HOME.`;
+            partnerLeftNoteDiv.innerText = `❗ ${data.partnerName} left — typing & send disabled.`;
             chatInput.disabled = true;
             sendBtn.disabled = true;
             typingIndicatorSpan.innerText = "";
