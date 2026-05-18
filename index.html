@@ -647,8 +647,7 @@
   // --- WebSocket setup (to be replaced with actual server URL) ---
   function connectWebSocket(username) {
     // Replace 'wss://your-backend.com/ws' with actual WebSocket endpoint
-    const wsUrl = "wss://echo.websocket.org";  // Example dummy echo server (for testing only)
-    // For real backend, use your own URL, e.g. "wss://api.yourserver.com/shadow"
+    const wsUrl = "wss://popchat-eqgk.onrender.com";
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       console.log("WebSocket connected");
