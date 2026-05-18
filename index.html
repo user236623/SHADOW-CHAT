@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Shadow Chat • Real-time</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a0a;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', monospace;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 540px;
+      height: 85vh;
+      min-height: 580px;
+      background: #000000;
+      border-radius: 40px;
+      box-shadow: 0 25px 40px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #000000;
+      padding: 28px 22px 22px 22px;
+      transition: opacity 0.2s;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h2 {
+      font-weight: 500;
+      font-size: 1.8rem;
+      letter-spacing: -0.3px;
+      color: white;
+      margin-bottom: 6px;
+    }
+
+    .sub {
+      color: #aaa;
+      font-size: 0.8rem;
+      border-left: 2px solid #2a2a2a;
+      padding-left: 12px;
+      margin-bottom: 32px;
+    }
+
+    input, button {
+      font-family: inherit;
+    }
+
+    input {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      padding: 14px 20px;
+      font-size: 1rem;
+      border-radius: 60px;
+      color: white;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: white;
+      background: #000;
+    }
+
+    button {
+      background: white;
+      border: none;
+      padding: 12px 20px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: 60px;
+      color: black;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:active {
+      background: #ccc;
+      transform: scale(0.97);
+    }
+
+    .waiting-box {
+      background: #0c0c0c;
+      border-radius: 36px;
+      padding: 28px 20px;
+      margin: 20px 0;
+      text-align: center;
+      border: 1px solid #222;
+    }
+
+    .big-number {
+      font-size: 3.8rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: white;
+      letter-spacing: 3px;
+    }
+
+    .active-label {
+      font-size: 0.85rem;
+      color: #aaa;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .status-msg {
+      color: #bbb;
+      margin-top: 20px;
+      font-size: 0.8rem;
+    }
+
+    .timeframe-estimate {
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: #888;
+      background: #111;
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 50px;
+      letter-spacing: 0.3px;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #222;
+      margin-bottom: 18px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .head-icon {
+      width: 48px;
+      height: 48px;
+      background: #111;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #2c2c2c;
+    }
+
+    .partner-status {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .status-led {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .led {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #333;
+    }
+
+    .led.green {
+      background-color: #1eff5e;
+      box-shadow: 0 0 6px #2eff6e;
+      animation: pulseGreen 1.2s infinite;
+    }
+
+    .led.red {
+      background-color: #ff3b3b;
+      box-shadow: 0 0 5px #ff4f4f;
+      animation: pulseRed 0.9s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    @keyframes pulseRed {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    .partner-name {
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: #181818;
+      padding: 4px 12px;
+      border-radius: 40px;
+      border-left: 1px solid #333;
+    }
+
+    .status-text {
+      font-size: 0.7rem;
+      color: #999;
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    .typing-indicator {
+      font-size: 0.7rem;
+      color: #aaa;
+      font-style: italic;
+      padding: 2px 0;
+    }
+
+    .leave-door {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .leave-door:hover {
+      background: #1a1a1a;
+    }
+
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-right: 6px;
+    }
+
+    .message-bubble {
+      max-width: 80%;
+      padding: 10px 16px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      background: #121212;
+      color: #efefef;
+      border: 0.5px solid #2a2a2a;
+      align-self: flex-start;
+    }
+
+    .my-message {
+      background: white;
+      color: black;
+      align-self: flex-end;
+      border: none;
+    }
+
+    .system-message {
+      font-size: 0.7rem;
+      color: #6a6a6a;
+      text-align: center;
+      margin: 6px 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .input-row input {
+      flex: 1;
+      background: #0f0f0f;
+      border-radius: 60px;
+    }
+
+    .input-row input:disabled, .input-row button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .action-buttons {
+      display: none;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .action-buttons.visible {
+      display: flex;
+    }
+
+    .action-buttons button {
+      flex: 1;
+      background: #181818;
+      color: white;
+      border: 1px solid #2e2e2e;
+    }
+
+    .partner-left-note {
+      font-size: 0.7rem;
+      color: #ff7b7b;
+      text-align: center;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="appRoot">
+  <div id="usernamePage" class="page">
+    <div style="flex:1; display: flex; flex-direction: column; justify-content: center;">
+      <h2>⬤ SHADOW CHAT</h2>
+      <div class="sub">real-time · anonymous · end-to-end</div>
+      <input type="text" id="usernameInput" placeholder="preferred username" maxlength="22" autocomplete="off">
+      <button id="enterBtn" style="margin-top: 28px;">↣ ENTER SHADOW</button>
+      <div style="margin-top: 28px; font-size: 0.7rem; text-align: center; color:#3a3a3a;">no sign · no trace · pure echo</div>
+    </div>
+  </div>
+
+  <div id="waitingPage" class="page hidden">
+    <h2 style="font-size:1.6rem;">◈ SHADOW VEIL</h2>
+    <div class="waiting-box">
+      <div class="active-label">ACTIVE NOW</div>
+      <div class="big-number" id="activeUserCount">0</div>
+      <div class="status-msg" id="matchStatusMsg">⚡ waiting for a partner...</div>
+      <div id="timeframeDisplay" class="timeframe-estimate">⟡ realtime matching</div>
+      <div id="connectionMessage" style="margin-top: 18px; font-weight: 500; color:white;"></div>
+    </div>
+    <div style="margin-top: auto; text-align:center; font-size:0.7rem; color:#2a2a2a;">matching entropy</div>
+  </div>
+
+  <div id="chatPage" class="page hidden">
+    <div class="chat-header">
+      <div class="header-left">
+        <div class="head-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="8" r="4" stroke="white" stroke-width="1.2" fill="none"/>
+            <path d="M5 20v-2c0-2.8 2.2-5 5-5h4c2.8 0 5 2.2 5 5v2" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="partner-status">
+          <div class="status-led">
+            <span class="led" id="partnerLed"></span>
+            <span id="partnerNameDisplay" class="partner-name">——</span>
+            <span id="partnerStatusText" class="status-text">offline</span>
+          </div>
+          <div id="typingIndicator" class="typing-indicator"></div>
+        </div>
+      </div>
+      <button id="leaveDoorBtn" class="leave-door" title="Leave chat">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H10" stroke="white" stroke-width="1.5" fill="none"/>
+          <path d="M12 8L16 12L12 16" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M16 12H3" stroke="white" stroke-width="1.5" fill="none"/>
+        </svg>
+      </button>
+    </div>
+    <div class="messages-area" id="messageContainer">
+      <div class="system-message">✦ Connection is established. You are now connected. ✦</div>
+    </div>
+    <div class="input-row">
+      <input type="text" id="chatInput" placeholder="type shadow whisper..." autocomplete="off">
+      <button id="sendMsgBtn">➤</button>
+    </div>
+    <div class="action-buttons" id="actionButtons">
+      <button id="backHomeBtn">BACK TO HOME</button>
+      <button id="rematchBtn">⟳ REMATCH</button>
+    </div>
+    <div id="partnerLeftNote" class="partner-left-note"></div>
+  </div>
+</div>
+
+<script>
+  let currentUsername = "";
+  let currentPartner = null;
+  let isConnected = false;
+  let partnerLeftFlag = false;
+  let ws = null;
+
+  const usernamePage = document.getElementById('usernamePage');
+  const waitingPage = document.getElementById('waitingPage');
+  const chatPage = document.getElementById('chatPage');
+  const usernameInput = document.getElementById('usernameInput');
+  const enterBtn = document.getElementById('enterBtn');
+  const activeUserCountSpan = document.getElementById('activeUserCount');
+  const matchStatusMsg = document.getElementById('matchStatusMsg');
+  const timeframeDisplay = document.getElementById('timeframeDisplay');
+  const connectionMsgDiv = document.getElementById('connectionMessage');
+  const partnerLed = document.getElementById('partnerLed');
+  const partnerNameDisplay = document.getElementById('partnerNameDisplay');
+  const partnerStatusTextSpan = document.getElementById('partnerStatusText');
+  const typingIndicatorSpan = document.getElementById('typingIndicator');
+  const messageContainer = document.getElementById('messageContainer');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendMsgBtn');
+  const backHomeBtn = document.getElementById('backHomeBtn');
+  const rematchBtn = document.getElementById('rematchBtn');
+  const partnerLeftNoteDiv = document.getElementById('partnerLeftNote');
+  const actionButtonsDiv = document.getElementById('actionButtons');
+  const leaveDoorBtn = document.getElementById('leaveDoorBtn');
+
+  function addMessage(content, type) {
+    const msgDiv = document.createElement('div');
+    if (type === 'me') {
+      msgDiv.className = 'message-bubble my-message';
+      msgDiv.textContent = content;
+    } else if (type === 'partner') {
+      msgDiv.className = 'message-bubble';
+      msgDiv.textContent = content;
+    } else {
+      msgDiv.className = 'system-message';
+      msgDiv.textContent = content;
+    }
+    messageContainer.appendChild(msgDiv);
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+  }
+
+  function clearMessages() {
+    messageContainer.innerHTML = '<div class="system-message">✦ Connection is established. You are now connected. ✦</div>';
+  }
+
+  function updatePartnerUI() {
+    if (!currentPartner) return;
+    partnerNameDisplay.textContent = currentPartner.name;
+    if (currentPartner.status === 'online') {
+      partnerStatusTextSpan.innerText = "active now";
+      partnerLed.className = "led green";
+    } else {
+      partnerStatusTextSpan.innerText = "left";
+      partnerLed.className = "led red";
+    }
+  }
+
+  function enableChatInput(enable) {
+    if (partnerLeftFlag || (currentPartner && currentPartner.status !== 'online')) {
+      chatInput.disabled = true;
+      sendBtn.disabled = true;
+    } else {
+      chatInput.disabled = !enable;
+      sendBtn.disabled = !enable;
+    }
+  }
+
+  function resetToUsernamePage() {
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    isConnected = false;
+    partnerLeftFlag = false;
+    currentPartner = null;
+    chatPage.classList.add('hidden');
+    waitingPage.classList.add('hidden');
+    usernamePage.classList.remove('hidden');
+    usernameInput.value = "";
+    partnerLeftNoteDiv.innerText = "";
+    actionButtonsDiv.classList.remove('visible');
+  }
+
+  function performRematch() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'rematch' }));
+    }
+    chatPage.classList.add('hidden');
+    waitingPage.classList.remove('hidden');
+    matchStatusMsg.innerText = "⚡ looking for another shadow...";
+    timeframeDisplay.innerText = "⟡ realtime matching";
+    connectionMsgDiv.innerText = "";
+    isConnected = false;
+    partnerLeftFlag = false;
+    currentPartner = null;
+    actionButtonsDiv.classList.remove('visible');
+  }
+
+  function connectWebSocket(username) {
+    const wsUrl = "wss://popchat-eqgk.onrender.com";
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'register', username: username }));
+      usernamePage.classList.add('hidden');
+      waitingPage.classList.remove('hidden');
+      matchStatusMsg.innerText = "⚡ waiting for a partner...";
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+          case 'active_users':
+            activeUserCountSpan.innerText = data.count;
+            break;
+            
+          case 'match_found':
+            waitingPage.classList.add('hidden');
+            chatPage.classList.remove('hidden');
+            clearMessages();
+            currentPartner = { name: data.partnerName, status: 'online' };
+            isConnected = true;
+            partnerLeftFlag = false;
+            updatePartnerUI();
+            enableChatInput(true);
+            addMessage(`Connected to ${data.partnerName}`, 'system');
+            actionButtonsDiv.classList.remove('visible');
+            partnerLeftNoteDiv.innerText = "";
+            typingIndicatorSpan.innerText = "";
+            break;
+            
+          case 'partner_message':
+            addMessage(data.text, 'partner');
+            break;
+            
+          case 'typing':
+            if (data.isTyping && currentPartner && currentPartner.status === 'online') {
+              typingIndicatorSpan.innerText = `${currentPartner.name} is typing ...`;
+            } else {
+              typingIndicatorSpan.innerText = "";
+            }
+            break;
+            
+          case 'partner_left':
+            if (currentPartner) currentPartner.status = 'left';
+            partnerLeftFlag = true;
+            updatePartnerUI();
+            addMessage(`${data.partnerName} has left the conversation`, 'system');
+            partnerLeftNoteDiv.innerText = `❗ ${data.partnerName} left — typing & send disabled. Use REMATCH or BACK TO HOME.`;
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+            typingIndicatorSpan.innerText = "";
+            actionButtonsDiv.classList.add('visible');
+            isConnected = false;
+            break;
+            
+          case 'error':
+            addMessage(`System error: ${data.message}`, 'system');
+            break;
+        }
+      } catch(e) {
+        console.error("Parse error:", e);
+      }
+    };
+    
+    ws.onerror = () => {
+      alert("Connection error. Please try again.");
+      resetToUsernamePage();
+    };
+    
+    ws.onclose = () => {
+      if (usernamePage.classList.contains('hidden') && !waitingPage.classList.contains('hidden')) {
+        alert("Disconnected from server. Returning to home.");
+        resetToUsernamePage();
+      }
+    };
+  }
+
+  enterBtn.addEventListener('click', () => {
+    let name = usernameInput.value.trim();
+    if (name === "") {
+      alert("choose a shadow username");
+      return;
+    }
+    currentUsername = name;
+    connectWebSocket(currentUsername);
+  });
+
+  backHomeBtn.addEventListener('click', () => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'leave_chat' }));
+    }
+    resetToUsernamePage();
+  });
+
+  rematchBtn.addEventListener('click', () => {
+    performRematch();
+  });
+
+  leaveDoorBtn.addEventListener('click', () => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'leave_chat' }));
+    }
+    resetToUsernamePage();
+  });
+
+  sendBtn.addEventListener('click', () => {
+    let msg = chatInput.value.trim();
+    if (msg) {
+      if (ws && ws.readyState === WebSocket.OPEN && isConnected && !partnerLeftFlag) {
+        ws.send(JSON.stringify({ type: 'chat_message', text: msg }));
+        addMessage(msg, 'me');
+        chatInput.value = "";
+      } else {
+        addMessage("Cannot send: partner is not connected", 'system');
+      }
+    }
+  });
+
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      let msg = chatInput.value.trim();
+      if (msg) {
+        if (ws && ws.readyState === WebSocket.OPEN && isConnected && !partnerLeftFlag) {
+          ws.send(JSON.stringify({ type: 'chat_message', text: msg }));
+          addMessage(msg, 'me');
+          chatInput.value = "";
+        } else {
+          addMessage("Cannot send: partner is not connected", 'system');
+        }
+      }
+    }
+  });
+
+  let typingTimeout;
+  chatInput.addEventListener('input', () => {
+    if (ws && ws.readyState === WebSocket.OPEN && isConnected && !partnerLeftFlag) {
+      ws.send(JSON.stringify({ type: 'typing', isTyping: true }));
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'typing', isTyping: false }));
+        }
+      }, 1000);
+    }
+  });
+
+  usernamePage.classList.remove('hidden');
+  waitingPage.classList.add('hidden');
+  chatPage.classList.add('hidden');
+  actionButtonsDiv.classList.remove('visible');
+</script>
+</body>
+</html>
